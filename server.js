@@ -1,35 +1,46 @@
-const express = require('express');
-const bodyParse = require('body-parser');
-const app = express();
+const app = require('express')();
+const bodyParser = require('body-parser');
 const cors = require ('cors');
+const sendGripDispatcher = require('@sendgrid/mail');
 
 app.use(bodyParser.json());
 app.use(cors());
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sendGripDispatcher.setApiKey(process.env.SENDGRID_API_KEY);
+
+app.get('/', (req,res) => {
+    res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/emailForm', (req,res) => {    
+
+    const {email,firstName,secondName,schoolDN,text,role, state, HUHAU} = req.query;
+
+    const html = `
+        <strong>First name: </strong> ${firstName}
+        <strong>Second name: </strong> ${secondName} 
+        <strong>School/District Name:</strong> ${schoolDN}
+        <strong>Role: </strong>${role}
+        <strong>State: </strong>${state}
+        <strong>How did he or she heard about us: </strong>${HUHAU}  
+        <strong>Text: </strong>${text}  
+    `
+
+    const msg = {
+        to: email,
+        html,
+        from: 'test@example.com',
+        subject: 'Tp 2hDesign',
+    };
+
+    sendGripDispatcher.send(msg).then((msg) => {
+        console.log(text)
+        res.status(200).send('success')
+    });
+    
+});
 
 
 app.listen(8080, () => {
     console.log('Server is running in port 8080');
-})
-
-app.get('/', (req,res) => {
-    res.sendFile(__dirname + '/emailForm.html');
-})
-
-app.get('/emailForm', (req,res) => {
-    res.sendFile(__dirname + '/emailForm.html');
-    const email = req.query.email;
-    const text = req.query.text;
-    console.log("[" + email, text + "]");
-    const sgMail = require('@sendgrid/mail');
-    const msg = {
-        to: email,
-        from: 'test@example.com',
-        subject: 'Sending with SendGrid is Fun',
-        text: text,
-        html: '<strong>and easy to do anywhere, even with Node.js</strong>',
-    };
-sgMail.send(msg);
-    
-})
+});
